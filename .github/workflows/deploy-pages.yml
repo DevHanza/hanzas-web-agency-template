@@ -1,54 +1,35 @@
-
-name: 🚀 Deploy to GitHub Pages
+# .github/workflows/deploy-docs.yml
+name: 🚀 Deploy docs/ to GitHub Pages
 
 on:
   push:
-    branches: [main]            # or your default branch
+    branches:
+      - docs        # triggers when you push to the docs branch
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout docs branch
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build with correct base
-        run: |
-          # Replace <REPO> with your actual repository name
-          npx vite build --base '/<REPO>/'
-        # 🎯 Ensures that asset URLs point to https://username.github.io/<REPO>/... :contentReference[oaicite:1]{index=1}
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist             # Adjust if your build output folder is different
+          ref: docs
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./        # deploy from root of docs branch
+          publish_branch: gh-pages   # branch that GitHub Pages serves from
+          enable_jekyll: false       # ensures .nojekyll is added :contentReference[oaicite:1]{index=1}
+          keep_files: false
+
+      - name: Confirm deployment
+        run: echo "Deployed docs/ → gh-pages"
